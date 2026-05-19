@@ -1,6 +1,20 @@
 # log-parser
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## Resources
+- https://svelte.dev/docs/kit/introduction
+  - Official docs for SvelteKit specifically, like nextjs.org
+- https://svelte.dev/docs/svelte/overview
+  - Official docs for Svelte, like react.dev
+- https://www.svelteexamples.com/
+  - Example projects to read through for better understanding structure.
+- https://www.sitepoint.com/a-beginners-guide-to-sveltekit/
+  - All the different svelte concepts put together to make a site.
+- https://svelte.dev/playground/hello-world?show=input
+  - Small examples available under the hamburger menu icon in the top left.
+- https://sveltebyexample.com/
+  - My personal favourite for svelte examples.
+
+> Most AIs are able to help you with Svelte but make sure to specify you're using **Svelte 5**. Most AIs I've worked with default to Svelte 4, which has had a lot of breaking changes in Svelte 5.
 
 ## Creating a project
 
