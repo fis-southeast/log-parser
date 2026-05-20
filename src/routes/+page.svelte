@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Log Parser</title>
+	<title>Test Preview Deployment</title>
 	<meta name="description" content="Turn noisy output into useful insight." />
 </svelte:head>
 
