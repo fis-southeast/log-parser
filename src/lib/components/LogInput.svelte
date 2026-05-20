@@ -8,20 +8,6 @@
 		textarea.style.height = 'auto';
 		textarea.style.height = `${Math.min(textarea.scrollHeight, 240)}px`;
 	}
-
-	$effect(() => {
-		resizeInput();
-	});
-
-	async function uploadLogFile(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-
-		if (!file) return;
-
-		logs = await file.text();
-		input.value = '';
-	}
 </script>
 
 <form class="w-full" aria-label="Log parser input">
@@ -30,7 +16,7 @@
 	>
 		<div class="relative">
 			<label class="sr-only" for="logs">Paste your logs</label>
-			<input id="log-file" class="sr-only" type="file" onchange={uploadLogFile} />
+			<input id="log-file" class="sr-only" type="file" />
 			{#if !logs}
 				<div
 					class="pointer-events-none absolute top-5 left-5 z-10 text-base leading-7 text-zinc-600"
@@ -47,7 +33,7 @@
 				id="logs"
 				bind:this={textarea}
 				bind:value={logs}
-				class="log-input mr-3 max-h-60 w-[calc(100%-0.75rem)] resize-none overflow-y-auto rounded-3xl border-0 bg-transparent px-5 py-5 text-base leading-7 text-zinc-100 focus:ring-0 focus:outline-none"
+				class="[scrollbar-thin] mr-3 max-h-60 w-[calc(100%-0.75rem)] resize-none [scrollbar-color:rgba(255,255,255,0.22)_transparent] overflow-y-auto rounded-3xl border-0 bg-transparent px-5 py-5 text-base leading-7 text-zinc-100 focus:ring-0 focus:outline-none [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-thumb]:min-h-11 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-4 [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:bg-clip-content hover:[&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-track]:bg-transparent"
 				oninput={resizeInput}
 				rows="1"
 				spellcheck="false"
@@ -68,30 +54,3 @@
 		</div>
 	</div>
 </form>
-
-<style>
-	.log-input {
-		scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-		scrollbar-width: thin;
-	}
-
-	.log-input::-webkit-scrollbar {
-		width: 12px;
-	}
-
-	.log-input::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	.log-input::-webkit-scrollbar-thumb {
-		min-height: 44px;
-		border: 4px solid transparent;
-		border-radius: 999px;
-		background-color: rgba(255, 255, 255, 0.22);
-		background-clip: content-box;
-	}
-
-	.log-input::-webkit-scrollbar-thumb:hover {
-		background-color: rgba(255, 255, 255, 0.32);
-	}
-</style>
