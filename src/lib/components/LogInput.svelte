@@ -12,6 +12,8 @@
 	let textarea: HTMLTextAreaElement;
 	let canSubmit = $derived(logs.trim().length > 0 && !isLoading);
 
+	let files = $state({} as FileList);
+
 	function resizeInput() {
 		if (!textarea) return;
 
@@ -25,6 +27,28 @@
 
 		onSubmit();
 	}
+
+	$effect(() => {
+		if (files) {
+			// Note that `files` is of type `FileList`, not an Array:
+			// https://developer.mozilla.org/en-US/docs/Web/API/FileLis
+
+			if (files.length === 0) {
+				logs = ""
+				return
+			}
+
+			if (files.length > 1) {
+				logs = ""
+				return
+			}
+
+			for (const f of files) {
+				console.log(`${f.name}: ${f.size} bytes`);
+				f.text().then((v) => logs = v)
+			}
+		}
+	});
 </script>
 
 <form class="w-full" aria-label="Log parser input" aria-busy={isLoading} onsubmit={handleSubmit}>
@@ -33,7 +57,7 @@
 	>
 		<div class="relative">
 			<label class="sr-only" for="logs">Paste your logs</label>
-			<input id="log-file" class="sr-only" type="file" disabled={isLoading} />
+			<input id="log-file" class="sr-only" type="file" disabled={isLoading} bind:files accept=".txt, text/plain, .log, .logs" />
 			{#if !logs}
 				<div
 					class="pointer-events-none absolute top-5 left-5 z-10 text-base leading-7 text-zinc-600"
