@@ -4,6 +4,7 @@
 	import LogInput from '$lib/components/LogInput.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import type { AnalysisResult as AnalysisResultType } from '$lib';
+	import {formatForAI, processLogBlob} from "$lib/util/processor";
 
 	let logs = $state('');
 	let isLoading = $state(false);
@@ -17,11 +18,14 @@
 		analysisResult = null;
 		errorMessage = '';
 
+		const entries = processLogBlob(logs);
+		const prompt = formatForAI(entries);
+
 		try {
 			const response = await fetch('/api/analyze', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ logs })
+				body: JSON.stringify({ logs: prompt }),
 			});
 
 			const body = await response.json();
