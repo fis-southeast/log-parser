@@ -1,6 +1,44 @@
 <script lang="ts">
+	import AnalysisLoading from '$lib/components/AnalysisLoading.svelte';
+	import AnalysisResult from '$lib/components/AnalysisResult.svelte';
 	import LogInput from '$lib/components/LogInput.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import type { AnalysisResult as AnalysisResultType } from '$lib';
+
+	let logs = $state('');
+	let isLoading = $state(false);
+	let analysisResult = $state<AnalysisResultType | null>(null);
+	let loadingTimer: ReturnType<typeof setTimeout>;
+
+	function parseLogs() {
+		if (isLoading || !logs.trim()) return;
+
+		isLoading = true;
+		analysisResult = null;
+		clearTimeout(loadingTimer);
+
+		loadingTimer = setTimeout(() => {
+			analysisResult = {
+				summary: 'The application is failing while trying to complete a database-backed request.',
+				severity: 'High',
+				likelyCause:
+					'A required database connection or query is timing out before the request can finish.',
+				evidence: [
+					'The logs contain repeated timeout messages near the failed request.',
+					'The error appears after the app starts database work, not during initial startup.',
+					'Multiple retries end with the same failure pattern.'
+				],
+				suggestedFixes: [
+					'Check that the database is reachable from the app environment.',
+					'Confirm the connection string, credentials, and network rules are correct.',
+					'Inspect the slow query or increase timeout limits only after confirming the database is healthy.'
+				],
+				beginnerExplanation:
+					'The app is asking the database for information, but the database is not answering quickly enough. The next step is to verify that the app can connect to the database and that the query is not getting stuck.'
+			};
+			isLoading = false;
+		}, 1200);
+	}
 </script>
 
 <svelte:head>
@@ -10,9 +48,19 @@
 
 <main class="min-h-screen bg-[#0b0b0f] px-4 text-zinc-100 sm:px-6">
 	<section
-		class="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center py-10"
+		class="mx-auto flex min-h-screen w-full flex-col items-center justify-center py-10 transition-[max-width] duration-500 ease-out {analysisResult
+			? 'max-w-5xl'
+			: 'max-w-3xl'}"
 	>
 		<PageHeader />
-		<LogInput />
+		<LogInput bind:logs {isLoading} onSubmit={parseLogs} />
+
+		{#if isLoading}
+			<AnalysisLoading />
+		{/if}
+
+		{#if analysisResult}
+			<AnalysisResult result={analysisResult} />
+		{/if}
 	</section>
 </main>
