@@ -1,1 +1,8 @@
-// place files you want to import through the `$lib` alias in this folder.
+export type AnalysisResult = {
+	summary: string;
+	severity: string;
+	likelyCause: string;
+	evidence: string[];
+	suggestedFixes: string[];
+	beginnerExplanation: string;
+};
