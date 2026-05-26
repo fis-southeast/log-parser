@@ -8,36 +8,34 @@
 	let logs = $state('');
 	let isLoading = $state(false);
 	let analysisResult = $state<AnalysisResultType | null>(null);
-	let loadingTimer: ReturnType<typeof setTimeout>;
+	let errorMessage = $state('');
 
-	function parseLogs() {
+	async function parseLogs() {
 		if (isLoading || !logs.trim()) return;
 
 		isLoading = true;
 		analysisResult = null;
-		clearTimeout(loadingTimer);
+		errorMessage = '';
 
-		loadingTimer = setTimeout(() => {
-			analysisResult = {
-				summary: 'The application is failing while trying to complete a database-backed request.',
-				severity: 'High',
-				likelyCause:
-					'A required database connection or query is timing out before the request can finish.',
-				evidence: [
-					'The logs contain repeated timeout messages near the failed request.',
-					'The error appears after the app starts database work, not during initial startup.',
-					'Multiple retries end with the same failure pattern.'
-				],
-				suggestedFixes: [
-					'Check that the database is reachable from the app environment.',
-					'Confirm the connection string, credentials, and network rules are correct.',
-					'Inspect the slow query or increase timeout limits only after confirming the database is healthy.'
-				],
-				beginnerExplanation:
-					'The app is asking the database for information, but the database is not answering quickly enough. The next step is to verify that the app can connect to the database and that the query is not getting stuck.'
-			};
+		try {
+			const response = await fetch('/api/analyze', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ logs })
+			});
+
+			const body = await response.json();
+
+			if (!response.ok) {
+				throw new Error(body.error ?? 'Failed to analyze logs.');
+			}
+
+			analysisResult = body.result;
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Failed to analyze logs.';
+		} finally {
 			isLoading = false;
-		}, 1200);
+		}
 	}
 </script>
 
@@ -57,6 +55,15 @@
 
 		{#if isLoading}
 			<AnalysisLoading />
+		{/if}
+
+		{#if errorMessage}
+			<p
+				class="mt-6 w-full rounded-3xl border border-red-400/20 bg-red-400/10 px-5 py-4 text-sm leading-6 text-red-100"
+				aria-live="polite"
+			>
+				{errorMessage}
+			</p>
 		{/if}
 
 		{#if analysisResult}
