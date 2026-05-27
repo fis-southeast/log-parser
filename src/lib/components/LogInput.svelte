@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tick } from 'svelte';
+
 	let {
 		logs = $bindable(''),
 		isLoading = false,
@@ -11,9 +13,8 @@
 
 	let error = $state('');
 	let textarea: HTMLTextAreaElement;
-	let canSubmit = $derived(logs.trim().length > 0 && !isLoading && error.length == 0);
-
-	let files: FileList | undefined = $state();
+	let isDraggingFile = $state(false);
+	let canSubmit = $derived(logs.trim().length > 0 && !isLoading && error.length === 0);
 
 	function resizeInput() {
 		if (!textarea) return;
@@ -29,38 +30,78 @@
 		onSubmit();
 	}
 
-	$effect(() => {
-		if (files) {
-			// Note that `files` is of type `FileList`, not an Array:
-			// https://developer.mozilla.org/en-US/docs/Web/API/FileList
-
-			if (files.length === 0) {
-				logs = '';
-				return;
-			}
-
-			if (files.length > 1) {
-				logs = '';
-				return;
-			}
-
-			for (const f of files) {
-				if (f.size > 50 * 1024 * 1024) {
-					error = 'File too large!';
-					files = {} as FileList;
-					return;
-				}
-				error = '';
-				console.log(`${f.name}: ${f.size} bytes`);
-				f.text().then((v) => (logs = v));
-			}
+	async function loadFile(file: File) {
+		if (file.size > 50 * 1024 * 1024) {
+			logs = '';
+			error = 'File too large!';
+			return;
 		}
-	});
+
+		try {
+			error = '';
+			logs = await file.text();
+			await tick();
+			resizeInput();
+		} catch {
+			logs = '';
+			error = 'Could not read that file.';
+		}
+	}
+
+	function handleFileInput(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+
+		if (!file || isLoading) return;
+
+		void loadFile(file);
+		input.value = '';
+	}
+
+	function handleDragOver(event: DragEvent) {
+		if (isLoading) return;
+
+		event.preventDefault();
+		isDraggingFile = true;
+	}
+
+	function handleDragLeave(event: DragEvent) {
+		if (!event.currentTarget || !event.relatedTarget) {
+			isDraggingFile = false;
+			return;
+		}
+
+		const dropZone = event.currentTarget as HTMLElement;
+		const nextTarget = event.relatedTarget as Node;
+
+		if (!dropZone.contains(nextTarget)) {
+			isDraggingFile = false;
+		}
+	}
+
+	function handleDrop(event: DragEvent) {
+		event.preventDefault();
+		isDraggingFile = false;
+
+		if (isLoading) return;
+
+		const file = event.dataTransfer?.files[0];
+		if (!file) return;
+
+		void loadFile(file);
+	}
 </script>
 
 <form class="w-full" aria-label="Log parser input" aria-busy={isLoading} onsubmit={handleSubmit}>
 	<div
-		class="rounded-4xl border border-white/10 bg-zinc-950/80 p-2 shadow-2xl ring-1 shadow-black/40 ring-white/3 backdrop-blur"
+		class="rounded-4xl border bg-zinc-950/80 p-2 shadow-2xl ring-1 shadow-black/40 backdrop-blur transition {isDraggingFile
+			? 'border-white/30 ring-white/20'
+			: 'border-white/10 ring-white/3'}"
+		ondragover={handleDragOver}
+		ondragleave={handleDragLeave}
+		ondrop={handleDrop}
+		role="region"
+		aria-label="Paste logs or drop a log file"
 	>
 		<div class="relative">
 			<label class="sr-only" for="logs">Paste your logs</label>
@@ -68,15 +109,15 @@
 				id="log-file"
 				class="sr-only"
 				type="file"
+				accept=".txt,text/plain,.log,.logs,.json,.out,.err,application/json"
 				disabled={isLoading}
-				bind:files
-				accept=".txt, text/plain, .log, .logs"
+				onchange={handleFileInput}
 			/>
 			{#if !logs}
 				<div
 					class="pointer-events-none absolute top-5 left-5 z-10 text-base leading-7 text-zinc-600"
 				>
-					Paste your logs or
+					Paste your logs, drop a file, or
 					<label
 						class:pointer-events-auto={!isLoading}
 						class:cursor-pointer={!isLoading}
