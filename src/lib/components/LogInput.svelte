@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HighlightedLogText from '$lib/components/HighlightedLogText.svelte';
 	import { tick } from 'svelte';
 
 	let {
@@ -14,6 +15,7 @@
 	let error = $state('');
 	let textarea: HTMLTextAreaElement;
 	let isDraggingFile = $state(false);
+	let scrollTop = $state(0);
 	let canSubmit = $derived(logs.trim().length > 0 && !isLoading && error.length === 0);
 
 	function resizeInput() {
@@ -21,6 +23,10 @@
 
 		textarea.style.height = 'auto';
 		textarea.style.height = `${Math.min(textarea.scrollHeight, 240)}px`;
+	}
+
+	function syncScroll() {
+		scrollTop = textarea?.scrollTop ?? 0;
 	}
 
 	function handleSubmit(event: SubmitEvent) {
@@ -42,6 +48,7 @@
 			logs = await file.text();
 			await tick();
 			resizeInput();
+			syncScroll();
 		} catch {
 			logs = '';
 			error = 'Could not read that file.';
@@ -126,13 +133,17 @@
 					>
 				</div>
 			{/if}
+			{#if logs}
+				<HighlightedLogText text={logs} {scrollTop} />
+			{/if}
 			<!-- svelte-ignore a11y_autofocus -->
 			<textarea
 				id="logs"
 				bind:this={textarea}
 				bind:value={logs}
-				class="[scrollbar-thin] mr-3 max-h-60 w-[calc(100%-0.75rem)] resize-none [scrollbar-color:rgba(255,255,255,0.22)_transparent] overflow-y-auto rounded-3xl border-0 bg-transparent px-5 py-5 text-base leading-7 text-zinc-100 transition focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:text-zinc-500 disabled:opacity-70 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-thumb]:min-h-11 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-4 [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:bg-clip-content hover:[&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-track]:bg-transparent"
+				class="[scrollbar-thin] relative mr-3 max-h-60 w-[calc(100%-0.75rem)] resize-none [scrollbar-color:rgba(255,255,255,0.22)_transparent] overflow-y-auto rounded-3xl border-0 bg-transparent px-5 py-5 text-base leading-7 text-transparent caret-white transition selection:bg-white/20 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:text-transparent disabled:opacity-70 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-thumb]:min-h-11 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-4 [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:bg-clip-content hover:[&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-track]:bg-transparent"
 				oninput={resizeInput}
+				onscroll={syncScroll}
 				rows="1"
 				spellcheck="false"
 				disabled={isLoading}
