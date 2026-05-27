@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tick } from 'svelte';
+
 	let {
 		logs = $bindable(''),
 		isLoading = false,
@@ -10,6 +12,8 @@
 	} = $props();
 
 	let textarea: HTMLTextAreaElement;
+	let isDraggingFile = $state(false);
+	let uploadError = $state('');
 	let canSubmit = $derived(logs.trim().length > 0 && !isLoading);
 
 	function resizeInput() {
@@ -25,20 +29,89 @@
 
 		onSubmit();
 	}
+
+	async function loadFile(file: File) {
+		uploadError = '';
+
+		try {
+			logs = await file.text();
+			await tick();
+			resizeInput();
+		} catch {
+			uploadError = 'Could not read that file.';
+		}
+	}
+
+	function handleFileInput(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+
+		if (!file || isLoading) return;
+
+		void loadFile(file);
+		input.value = '';
+	}
+
+	function handleDragOver(event: DragEvent) {
+		if (isLoading) return;
+
+		event.preventDefault();
+		isDraggingFile = true;
+	}
+
+	function handleDragLeave(event: DragEvent) {
+		if (!event.currentTarget || !event.relatedTarget) {
+			isDraggingFile = false;
+			return;
+		}
+
+		const dropZone = event.currentTarget as HTMLElement;
+		const nextTarget = event.relatedTarget as Node;
+
+		if (!dropZone.contains(nextTarget)) {
+			isDraggingFile = false;
+		}
+	}
+
+	function handleDrop(event: DragEvent) {
+		event.preventDefault();
+		isDraggingFile = false;
+
+		if (isLoading) return;
+
+		const file = event.dataTransfer?.files[0];
+		if (!file) return;
+
+		void loadFile(file);
+	}
 </script>
 
 <form class="w-full" aria-label="Log parser input" aria-busy={isLoading} onsubmit={handleSubmit}>
 	<div
-		class="rounded-4xl border border-white/10 bg-zinc-950/80 p-2 shadow-2xl ring-1 shadow-black/40 ring-white/3 backdrop-blur"
+		class="rounded-4xl border bg-zinc-950/80 p-2 shadow-2xl ring-1 shadow-black/40 backdrop-blur transition {isDraggingFile
+			? 'border-white/30 ring-white/20'
+			: 'border-white/10 ring-white/3'}"
+		ondragover={handleDragOver}
+		ondragleave={handleDragLeave}
+		ondrop={handleDrop}
+		role="region"
+		aria-label="Paste logs or drop a log file"
 	>
 		<div class="relative">
 			<label class="sr-only" for="logs">Paste your logs</label>
-			<input id="log-file" class="sr-only" type="file" disabled={isLoading} />
+			<input
+				id="log-file"
+				class="sr-only"
+				type="file"
+				accept=".log,.txt,.json,.out,.err,text/*,application/json"
+				disabled={isLoading}
+				onchange={handleFileInput}
+			/>
 			{#if !logs}
 				<div
 					class="pointer-events-none absolute top-5 left-5 z-10 text-base leading-7 text-zinc-600"
 				>
-					Paste your logs or
+					Paste your logs, drop a file, or
 					<label
 						class:pointer-events-auto={!isLoading}
 						class:cursor-pointer={!isLoading}
@@ -86,5 +159,9 @@
 
 	{#if isLoading}
 		<p class="sr-only" aria-live="polite">Analyzing your logs. Input is disabled.</p>
+	{/if}
+
+	{#if uploadError}
+		<p class="mt-3 px-4 text-sm text-red-200" aria-live="polite">{uploadError}</p>
 	{/if}
 </form>
