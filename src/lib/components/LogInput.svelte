@@ -11,10 +11,10 @@
 		onSubmit: () => void;
 	} = $props();
 
+	let error = $state('');
 	let textarea: HTMLTextAreaElement;
 	let isDraggingFile = $state(false);
-	let uploadError = $state('');
-	let canSubmit = $derived(logs.trim().length > 0 && !isLoading);
+	let canSubmit = $derived(logs.trim().length > 0 && !isLoading && error.length === 0);
 
 	function resizeInput() {
 		if (!textarea) return;
@@ -31,14 +31,20 @@
 	}
 
 	async function loadFile(file: File) {
-		uploadError = '';
+		if (file.size > 50 * 1024 * 1024) {
+			logs = '';
+			error = 'File too large!';
+			return;
+		}
 
 		try {
+			error = '';
 			logs = await file.text();
 			await tick();
 			resizeInput();
 		} catch {
-			uploadError = 'Could not read that file.';
+			logs = '';
+			error = 'Could not read that file.';
 		}
 	}
 
@@ -103,7 +109,7 @@
 				id="log-file"
 				class="sr-only"
 				type="file"
-				accept=".log,.txt,.json,.out,.err,text/*,application/json"
+				accept=".txt,text/plain,.log,.logs,.json,.out,.err,application/json"
 				disabled={isLoading}
 				onchange={handleFileInput}
 			/>
@@ -134,6 +140,12 @@
 			></textarea>
 		</div>
 
+		{#if error.length > 0}
+			<div class="flex gap-3 border-t border-white/10 px-4 py-4 text-lg text-red-300">
+				{error}
+			</div>
+		{/if}
+
 		<div
 			class="flex flex-col gap-3 border-t border-white/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
 		>
@@ -159,9 +171,5 @@
 
 	{#if isLoading}
 		<p class="sr-only" aria-live="polite">Analyzing your logs. Input is disabled.</p>
-	{/if}
-
-	{#if uploadError}
-		<p class="mt-3 px-4 text-sm text-red-200" aria-live="polite">{uploadError}</p>
 	{/if}
 </form>
