@@ -58,6 +58,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	try {
 		const analysisInput = trimmedLogs;
+		console.log(`Analysis length: ${analysisInput.length}`);
 		const result = await analyzeLogsWithOpenAI(analysisInput);
 
 		return json({ result });
