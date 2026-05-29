@@ -15,6 +15,8 @@
 	let textarea: HTMLTextAreaElement;
 	let isDraggingFile = $state(false);
 	let canSubmit = $derived(logs.trim().length > 0 && !isLoading && error.length === 0);
+	let lineCount = $derived(logs.length > 0 ? logs.split('\n').length : 0);
+	let characterCount = $derived(logs.length);
 
 	function resizeInput() {
 		if (!textarea) return;
@@ -149,7 +151,16 @@
 		<div
 			class="flex flex-col gap-3 border-t border-white/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
 		>
-			<p class="text-sm text-zinc-500">Supports stack traces, server logs, and CLI output.</p>
+			<div class="text-sm text-zinc-500">
+				<p>Supports stack traces, server logs, and CLI output.</p>
+				{#if logs}
+					<p class="mt-1 text-zinc-600">
+						{lineCount.toLocaleString()}
+						{lineCount === 1 ? 'line' : 'lines'} | {characterCount.toLocaleString()}
+						{characterCount === 1 ? 'character' : 'characters'}
+					</p>
+				{/if}
+			</div>
 			<button
 				type="submit"
 				class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-zinc-950 focus:outline-none disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"

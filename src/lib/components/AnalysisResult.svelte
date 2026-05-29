@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MarkdownText from '$lib/components/MarkdownText.svelte';
 	import type { AnalysisResult } from '$lib';
 
 	let { result }: { result: AnalysisResult } = $props();
@@ -30,21 +31,27 @@
 				<h3 class="mb-3 text-sm font-semibold tracking-[0.16em] text-zinc-400 uppercase">
 					Summary
 				</h3>
-				<p class="text-base leading-7 text-zinc-100">{result.summary}</p>
+				<div class="text-base leading-7 text-zinc-100">
+					<MarkdownText text={result.summary} />
+				</div>
 			</article>
 
 			<article class="rounded-3xl border border-white/10 bg-white/3 p-5">
 				<h3 class="mb-3 text-sm font-semibold tracking-[0.16em] text-zinc-400 uppercase">
 					Likely Cause
 				</h3>
-				<p class="text-base leading-7 text-zinc-200">{result.likelyCause}</p>
+				<div class="text-base leading-7 text-zinc-200">
+					<MarkdownText text={result.likelyCause} />
+				</div>
 			</article>
 
 			<article class="rounded-3xl border border-white/10 bg-white/3 p-5">
 				<h3 class="mb-3 text-sm font-semibold tracking-[0.16em] text-zinc-400 uppercase">
 					Beginner-Friendly Explanation
 				</h3>
-				<p class="text-base leading-7 text-zinc-200">{result.beginnerExplanation}</p>
+				<div class="text-base leading-7 text-zinc-200">
+					<MarkdownText text={result.beginnerExplanation} />
+				</div>
 			</article>
 
 			<article class="rounded-3xl border border-white/10 bg-white/3 p-5">
@@ -55,7 +62,7 @@
 					{#each result.evidence as item (item)}
 						<li class="flex gap-3">
 							<span class="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-500"></span>
-							<span>{item}</span>
+							<span><MarkdownText text={item} /></span>
 						</li>
 					{/each}
 				</ul>
@@ -69,7 +76,7 @@
 					{#each result.suggestedFixes as item (item)}
 						<li class="flex gap-3">
 							<span class="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-300"></span>
-							<span>{item}</span>
+							<span><MarkdownText text={item} /></span>
 						</li>
 					{/each}
 				</ul>
