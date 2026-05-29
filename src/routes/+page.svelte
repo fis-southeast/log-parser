@@ -5,6 +5,7 @@
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import type { AnalysisResult as AnalysisResultType } from '$lib';
 	import { formatForAI, processLogBlob } from '$lib/util/processor';
+	import { onMount } from 'svelte';
 
 	let logs = $state('');
 	let isLoading = $state(false);
@@ -41,6 +42,10 @@
 			isLoading = false;
 		}
 	}
+
+	onMount(() => {
+		logs = '';
+	});
 </script>
 
 <svelte:head>
